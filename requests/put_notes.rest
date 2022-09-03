@@ -1,0 +1,8 @@
+PUT http://localhost:3001/api/notes/6313325e65c8c44fa7940361
+Content-Type: application/json
+
+{
+        
+        "content": "Probando los PUT en mongoDB",
+        "important": true
+}

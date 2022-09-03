@@ -1,89 +1,104 @@
-const express = require('express')
-const cors = require('cors')
+require('dotenv').config()
+require('./mongo')
 
+const express = require('express')
 const app = express()
+const cors = require('cors')
+const Note = require('./models/Notes')
+
+
 const logger = require('./loggerMiddleware')
 
-app.use(express.json())
 app.use(cors())
+app.use(express.json())
+
 app.use(logger)
 
-let notes = [
-  {
-    id: 1,
-    content: 'Me tengo que suscribir a @midudev en YouTube y Twitch',
-    date: '2019-05-30T17:30:31.098Z',
-    important: true
-  },
-  {
-    id: 2,
-    content: 'Tengo que estudiar las clases de FullStack Bootcamp',
-    date: '2019-05-30T18:39:34.091Z',
-    important: false
-  },
-  {
-    id: 3,
-    content: 'Repasar los retos de JS de midudev',
-    date: '2019-05-30T19:20:14.298Z',
-    important: true
-  }
-]
+let notes = []
 
 app.get('/', (request, response) => {
   response.send('<h1>Hello world</h1>')
 })
 
 app.get('/api/notes', (request, response) => {
-  response.json(notes)
+  Note.find({}).then(notes => {
+    response.json(notes)
+  })
 })
 
-app.get('/api/notes/:id', (request, response) => {
-  const id = Number(request.params.id)
-  const note = notes.find(note => note.id === id)
-  if (note) {
-    response.json(note)
-  } else {
-    response.status(404).end()
+app.get('/api/notes/:id', (request, response, next) => {
+  const { id } = request.params
+  Note.findById(id).then(note => {
+    if (note) {
+      response.json(note)
+    } else {
+      response.status(404).end()
+    }
+  }).catch(error => {
+    next(error)
+  })
+
+
+})
+
+app.put('/api/notes/:id', (request, response, next) => {
+  const { id } = request.params
+
+  const note = request.body
+
+  const newNoteInfo = {
+    content: note.content,
+    important: note.important
   }
+
+  Note.findByIdAndUpdate(id, newNoteInfo).then(result => {
+    response.status(200).end()
+  })
+
 })
 
-app.delete('/api/notes/:id', (request, response) => {
-  const id = Number(request.params.id)
-  notes = notes.filter(note => note.id !== id)
+app.delete('/api/notes/:id', (request, response, next) => {
+  const { id } = request.params
+  Note.findByIdAndRemove(id).then(result => {
+    response.status(204).end()
+  }).catch(error => next(error))
+
   response.status(204).end()
 })
 
 app.post('/api/notes', (request, response) => {
   const note = request.body
 
-  if (note || !note.title) {
+  if (!note.content) {
     return response.status(400).json({
-      error: 'note.title is missing'
+      error: 'note.content is missing'
     })
   }
 
-  const ids = notes.map(note => note.id)
-  const maxId = Math.max(...ids)
-
-  const newNote = {
-    id: maxId + 1,
-    userId: note.userId,
-    title: note.title,
-    body: note.body
-  }
-
-  notes = [...notes, newNote]
-
-  response.status(201).json(newNote)
-})
-
-app.use((request, response) => {
-  response.status(404).json({
-    error: 'Not found'
+  const newNote = Note({
+    content: note.content,
+    date: new Date(),
+    important: note.important || false
   })
+
+  newNote.save().then(savedNote => {
+    response.json(savedNote)
+  })
+
+  response.json(newNote)
 })
 
-const PORT = process.env.PORT || 3001
+app.use((error, request, response, next) => {
+  console.error(error)
+  console.log(error.name)
+  if (error.name === 'CastError') {
+    response.status(400).send({ error: 'malformatted id' })
+  } else {
+    response.status(500).end()
+  }
+})
+
+const PORT = process.env.PORT
 
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`)
