@@ -7,7 +7,7 @@ const noteSchema = new Schema({
 })
 
 noteSchema.set('toJSON', {
-  transform: (document, returnedObject) => {
+  transform: (returnedObject) => {
     returnedObject.id = returnedObject._id
     delete returnedObject._id
     delete returnedObject.__v

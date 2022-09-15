@@ -1,19 +1,19 @@
 const { palindrome } = require('../utils/for_testing')
 
-test('palindrome of midudev', () => {
-    const result = palindrome('midudev')
+test.skip('palindrome of midudev', () => {
+  const result = palindrome('midudev')
 
-    expect(result).toBe('vedudim')
+  expect(result).toBe('vedudim')
 })
 
-test('palindrome of empty string', () => {
-    const result = palindrome('')
+test.skip('palindrome of empty string', () => {
+  const result = palindrome('')
 
-    expect(result).toBe('')
+  expect(result).toBe('')
 })
 
-test('palindrome of undefined', () => {
-    const result = palindrome()
+test.skip('palindrome of undefined', () => {
+  const result = palindrome()
 
-    expect(result).toBeUndefined()
+  expect(result).toBeUndefined()
 })
